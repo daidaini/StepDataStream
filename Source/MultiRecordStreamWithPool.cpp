@@ -39,7 +39,7 @@ std::string MultiRecordStreamWithPool::ToSerialized()
 
     result = BaseRecord();
 
-    for (auto &item : m_BaseRecords)
+    for (auto &item : m_BodyRecords)
     {
         result.append(item.second);
 
