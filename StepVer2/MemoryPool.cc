@@ -5,7 +5,7 @@ namespace stepver2
 {
     // MemoryBlock 实现
     MemoryBlock::MemoryBlock(size_t size)
-        : data_(std::make_unique<char[]>(size)), total_size_(size), used_size_(0)
+        : data_(size), total_size_(size), used_size_(0)
     {
         if (size == 0)
         {
@@ -46,7 +46,7 @@ namespace stepver2
             return nullptr;
         }
 
-        char *result = data_.get() + used_size_;
+        char *result = data_.data() + used_size_;
         used_size_ += size;
         return result;
     }

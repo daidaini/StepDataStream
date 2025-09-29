@@ -62,7 +62,7 @@ namespace stepver2
         bool CanAllocate(size_t size) const { return GetAvailableSize() >= size; }
 
     private:
-        std::unique_ptr<char[]> data_;  // 内存数据
+        std::vector<char> data_;  // 内存数据
         size_t total_size_;             // 总内存大小
         size_t used_size_;              // 已使用的内存大小
     };
