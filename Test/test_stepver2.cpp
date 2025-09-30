@@ -144,8 +144,10 @@ void TestEscaping()
     
     step.GotoFirst();
     std::string recordValue = step.GetStepValueByID(STEP_MSG);
+    std::cout << "TestEscaping = \n" << recordValue << std::endl
+              << testStr << std::endl;
     assert(recordValue == testStr);
-    
+
     std::cout << "Character escaping test passed!" << std::endl;
 }
 

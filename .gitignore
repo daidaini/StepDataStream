@@ -1,2 +1,7 @@
 */build/*
 
+.claude/
+
+test_*
+
+.vscode/

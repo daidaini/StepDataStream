@@ -26,6 +26,9 @@ namespace stepver2
         explicit StepVer2(int blockSize = CacheBlockSize);
         virtual ~StepVer2() = default;
 
+        // 根据blockSize确定内存池初始等级
+        static int DetermineMemoryLevelFromSize(int blockSize);
+
         void Init();
 
         /*对于字符的转义，需要注意：

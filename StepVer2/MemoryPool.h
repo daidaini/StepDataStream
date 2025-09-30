@@ -13,12 +13,17 @@
 namespace stepver2
 {
     /**
-     * @brief 内存块类，管理单个内存块
+     * @brief 内存块类，支持4档动态扩充的内存管理
+     * 第1档: 1024 bytes, 第2档: 4096 bytes, 第3档: 16384 bytes, 第4档: 65536 bytes
      */
     class MemoryBlock
     {
     public:
-        explicit MemoryBlock(size_t size);
+        /**
+         * @brief 构造函数，指定初始等级(1-4)
+         * @param level 初始容量等级，如果超出范围则限制在有效范围内
+         */
+        explicit MemoryBlock(int level = 1);
         ~MemoryBlock() = default;
 
         // 禁用拷贝构造和赋值
@@ -30,14 +35,14 @@ namespace stepver2
         MemoryBlock &operator=(MemoryBlock &&other) noexcept;
 
         /**
-         * @brief 分配指定大小的内存
+         * @brief 分配指定大小的内存，支持动态扩充
          * @param size 需要分配的内存大小
          * @return 分配的内存指针，失败返回nullptr
          */
         char *Allocate(size_t size);
 
         /**
-         * @brief 重置内存块，清空所有数据
+         * @brief 重置内存块，清空所有数据但保持当前容量等级
          */
         void Reset();
 
@@ -47,33 +52,66 @@ namespace stepver2
         size_t GetUsedSize() const { return used_size_; }
 
         /**
-         * @brief 获取总内存大小
+         * @brief 获取当前总内存大小
          */
-        size_t GetTotalSize() const { return total_size_; }
+        size_t GetTotalSize() const { return data_.size(); }
 
         /**
          * @brief 获取剩余可用内存大小
          */
-        size_t GetAvailableSize() const { return total_size_ - used_size_; }
+        size_t GetAvailableSize() const { return GetTotalSize() - used_size_; }
 
         /**
          * @brief 检查是否有足够的空间分配指定大小的内存
          */
         bool CanAllocate(size_t size) const { return GetAvailableSize() >= size; }
 
+        /**
+         * @brief 获取当前容量等级(1-4)
+         */
+        int GetLevel() const { return current_level_; }
+
+        /**
+         * @brief 获取指定等级的容量大小
+         * @param level 等级(1-4)，超出范围返回0
+         */
+        static size_t GetLevelCapacity(int level);
+
     private:
-        std::vector<char> data_;  // 内存数据
-        size_t total_size_;             // 总内存大小
-        size_t used_size_;              // 已使用的内存大小
+        /**
+         * @brief 动态扩充到指定等级
+         * @param target_level 目标等级
+         * @return 扩充成功返回true，失败返回false
+         */
+        bool ExpandToLevel(int target_level);
+
+        /**
+         * @brief 根据所需大小确定目标等级
+         * @param required_size 需要的总大小
+         * @return 目标等级(1-4)
+         */
+        int DetermineTargetLevel(size_t required_size) const;
+
+    private:
+        std::vector<char> data_;      // 内存数据
+        int current_level_;           // 当前容量等级
+        size_t used_size_;           // 已使用的内存大小
+
+        // 4档容量大小
+        static const size_t LEVEL_CAPACITIES[4];
     };
 
     /**
-     * @brief 内存池类，管理多个内存块
+     * @brief 内存池类，管理多个支持动态扩充的内存块
      */
     class MemoryPool
     {
     public:
-        explicit MemoryPool(size_t block_size = 16 * 1024);
+        /**
+         * @brief 构造函数，指定内存块的初始等级(1-4)
+         * @param initial_level 内存块的初始容量等级
+         */
+        explicit MemoryPool(int initial_level = 2); // 默认第2档(4KB)
         ~MemoryPool() = default;
 
         // 禁用拷贝构造和赋值
@@ -126,7 +164,7 @@ namespace stepver2
         MemoryBlock *FindAvailableBlock(size_t size);
 
     private:
-        size_t block_size_;                             // 每个内存块的大小
+        int initial_level_;                           // 内存块的初始等级
         std::vector<std::unique_ptr<MemoryBlock>> blocks_; // 内存块列表
         size_t current_block_index_;                    // 当前使用的内存块索引
     };
