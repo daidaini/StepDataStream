@@ -12,29 +12,8 @@ namespace stepver2
     static const std::map<char, char> s_EscapeItemMap{
         {'\\', '\\'}, {'=', 'a'}, {'&', 'b'}, {'\n', 'n'}};
 
-    // 根据blockSize确定内存池初始等级
-    int StepVer2::DetermineMemoryLevelFromSize(int blockSize)
-    {
-        if (blockSize <= 1024)
-        {
-            return 1; // 1KB
-        }
-        else if (blockSize <= 4096)
-        {
-            return 2; // 4KB
-        }
-        else if (blockSize <= 16384)
-        {
-            return 3; // 16KB
-        }
-        else
-        {
-            return 4; // 64KB
-        }
-    }
-
-    StepVer2::StepVer2(int blockSize)
-        : blockSize_(blockSize), memoryPool_(StepVer2::DetermineMemoryLevelFromSize(blockSize))
+    
+    StepVer2::StepVer2()
     {
         tmpBuffer_.reserve(1024);
         bodyRecords_.reserve(128);
@@ -377,7 +356,7 @@ namespace stepver2
         {
             char *newPtr = memoryPool_.Allocate(currRec.data() + 1, currRec.size() - 1);
             bodyRecords_[currentRecIndex_].data = newPtr;
-            bodyRecords_[currentRecIndex_].length = std::min(int(currRec.size() - 1), blockSize_ - 1);
+            bodyRecords_[currentRecIndex_].length = currRec.size();
             return true;
         }
         catch (const std::exception &)

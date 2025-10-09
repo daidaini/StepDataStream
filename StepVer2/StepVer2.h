@@ -23,11 +23,8 @@ namespace stepver2
         // 保持与原类相同的常量定义
         static constexpr int CacheBlockSize = 16 * 1024; // 每条记录的最大长度, 暂定16k
 
-        explicit StepVer2(int blockSize = CacheBlockSize);
+        StepVer2(); // 0表示使用默认值，从最低档开始
         virtual ~StepVer2() = default;
-
-        // 根据blockSize确定内存池初始等级
-        static int DetermineMemoryLevelFromSize(int blockSize);
 
         void Init();
 
@@ -103,7 +100,7 @@ namespace stepver2
         std::string GetItem(int stepid);
 
     protected:
-        int blockSize_;
+        int blockSize_{0};
         //<id, val>
         std::map<int, std::string> baseRecord_;
 

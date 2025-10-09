@@ -269,8 +269,8 @@ namespace stepver2
         // 没有提示大小，基于历史使用情况智能选择
         if (total_allocated_count_ == 0)
         {
-            // 首次分配，从第2档开始(4KB)，平衡内存使用和性能
-            return 2;
+            // 首次分配，从第1档开始(1KB)，节省内存，后续会自动扩充
+            return 1;
         }
 
         // 计算平均分配大小
