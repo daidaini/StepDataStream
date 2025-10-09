@@ -122,37 +122,36 @@ namespace stepver2
     }
 
     // MemoryPool 实现
-    MemoryPool::MemoryPool(int initial_level)
-        : initial_level_(initial_level), current_block_index_(0)
+    MemoryPool::MemoryPool()
+        : current_block_index_(0), total_allocated_count_(0), total_allocated_size_(0)
     {
-        if (initial_level < 1 || initial_level > 4)
-        {
-            throw std::invalid_argument("MemoryPool initial level must be between 1 and 4");
-        }
-
-        // 预分配一个内存块
+        // 预分配一个初始内存块，从第2档开始(4KB)
         AllocateNewBlock();
     }
 
     MemoryPool::MemoryPool(MemoryPool &&other) noexcept
-        : initial_level_(other.initial_level_),
-          blocks_(std::move(other.blocks_)),
-          current_block_index_(other.current_block_index_)
+        : blocks_(std::move(other.blocks_)),
+          current_block_index_(other.current_block_index_),
+          total_allocated_count_(other.total_allocated_count_),
+          total_allocated_size_(other.total_allocated_size_)
     {
-        other.initial_level_ = 1;
         other.current_block_index_ = 0;
+        other.total_allocated_count_ = 0;
+        other.total_allocated_size_ = 0;
     }
 
     MemoryPool &MemoryPool::operator=(MemoryPool &&other) noexcept
     {
         if (this != &other)
         {
-            initial_level_ = other.initial_level_;
             blocks_ = std::move(other.blocks_);
             current_block_index_ = other.current_block_index_;
+            total_allocated_count_ = other.total_allocated_count_;
+            total_allocated_size_ = other.total_allocated_size_;
 
-            other.initial_level_ = 1;
             other.current_block_index_ = 0;
+            other.total_allocated_count_ = 0;
+            other.total_allocated_size_ = 0;
         }
         return *this;
     }
@@ -170,13 +169,17 @@ namespace stepver2
             throw std::invalid_argument("Data size exceeds maximum capacity");
         }
 
+        // 更新统计信息
+        ++total_allocated_count_;
+        total_allocated_size_ += size;
+
         // 查找可用的内存块
         MemoryBlock *available_block = FindAvailableBlock(size);
 
         if (!available_block)
         {
-            // 没有可用的内存块，分配新的
-            AllocateNewBlock();
+            // 没有可用的内存块，智能分配新的
+            AllocateNewBlock(size);
             available_block = blocks_.back().get();
         }
 
@@ -198,6 +201,8 @@ namespace stepver2
             block->Reset();
         }
         current_block_index_ = 0;
+        total_allocated_count_ = 0;
+        total_allocated_size_ = 0;
     }
 
     size_t MemoryPool::GetTotalUsedSize() const
@@ -220,16 +225,73 @@ namespace stepver2
         return total;
     }
 
-    void MemoryPool::AllocateNewBlock()
+    void MemoryPool::AllocateNewBlock(size_t hint_size)
     {
         try
         {
-            auto new_block = std::make_unique<MemoryBlock>(initial_level_);
+            int optimal_level = DetermineOptimalInitialLevel(hint_size);
+            auto new_block = std::make_unique<MemoryBlock>(optimal_level);
             blocks_.push_back(std::move(new_block));
         }
         catch (const std::exception &e)
         {
             throw std::runtime_error("Failed to allocate new memory block: " + std::string(e.what()));
+        }
+    }
+
+    int MemoryPool::DetermineOptimalInitialLevel(size_t hint_size) const
+    {
+        // 如果有提示大小，直接基于大小选择
+        if (hint_size > 0)
+        {
+            // 如果超过最大档容量的一半，直接从最大档开始
+            if (hint_size > MemoryBlock::GetLevelCapacity(4) / 2)
+            {
+                return 4;
+            }
+            // 如果超过第3档容量的一半，从第3档开始
+            else if (hint_size > MemoryBlock::GetLevelCapacity(3) / 2)
+            {
+                return 3;
+            }
+            // 如果超过第2档容量的一半，从第2档开始
+            else if (hint_size > MemoryBlock::GetLevelCapacity(2) / 2)
+            {
+                return 2;
+            }
+            // 否则从第1档开始
+            else
+            {
+                return 1;
+            }
+        }
+
+        // 没有提示大小，基于历史使用情况智能选择
+        if (total_allocated_count_ == 0)
+        {
+            // 首次分配，从第2档开始(4KB)，平衡内存使用和性能
+            return 2;
+        }
+
+        // 计算平均分配大小
+        size_t average_size = total_allocated_size_ / total_allocated_count_;
+
+        // 如果平均大小较大，倾向于从更大的档位开始
+        if (average_size >= MemoryBlock::GetLevelCapacity(4) / 2)
+        {
+            return 4; // 平均大小接近最大档，直接从最大档开始
+        }
+        else if (average_size >= MemoryBlock::GetLevelCapacity(3) / 2)
+        {
+            return 3; // 平均大小中等，从第3档开始
+        }
+        else if (average_size >= MemoryBlock::GetLevelCapacity(2) / 2)
+        {
+            return 2; // 平均大小较小，从第2档开始
+        }
+        else
+        {
+            return 1; // 平均大小很小，从最小档开始，节省内存
         }
     }
 

@@ -108,10 +108,9 @@ namespace stepver2
     {
     public:
         /**
-         * @brief 构造函数，指定内存块的初始等级(1-4)
-         * @param initial_level 内存块的初始容量等级
+         * @brief 构造函数，自动选择最优的内存块初始等级
          */
-        explicit MemoryPool(int initial_level = 2); // 默认第2档(4KB)
+        MemoryPool();
         ~MemoryPool() = default;
 
         // 禁用拷贝构造和赋值
@@ -153,8 +152,9 @@ namespace stepver2
     private:
         /**
          * @brief 分配新的内存块
+         * @param hint_size 提示的内存大小，用于智能选择初始等级
          */
-        void AllocateNewBlock();
+        void AllocateNewBlock(size_t hint_size = 0);
 
         /**
          * @brief 查找可用的内存块
@@ -163,9 +163,17 @@ namespace stepver2
          */
         MemoryBlock *FindAvailableBlock(size_t size);
 
+        /**
+         * @brief 根据历史使用情况智能选择内存块的初始等级
+         * @param hint_size 提示的内存大小
+         * @return 推荐的初始等级(1-4)
+         */
+        int DetermineOptimalInitialLevel(size_t hint_size) const;
+
     private:
-        int initial_level_;                           // 内存块的初始等级
         std::vector<std::unique_ptr<MemoryBlock>> blocks_; // 内存块列表
         size_t current_block_index_;                    // 当前使用的内存块索引
+        size_t total_allocated_count_;                  // 总分配次数
+        size_t total_allocated_size_;                   // 总分配大小
     };
 }
