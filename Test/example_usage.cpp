@@ -17,7 +17,7 @@ void BasicUsageExample()
     std::cout << "=== 基本使用示例 ===" << std::endl;
 
     // 创建StepVer2实例
-    GatePBStep step;
+    CachedGatePBStep step;
 
     // 初始化
     step.Init();
@@ -69,7 +69,7 @@ void SerializationExample()
     std::cout << "\n=== 序列化和反序列化示例 ===" << std::endl;
 
     // 创建原始数据
-    GatePBStep originalStep;
+    CachedGatePBStep originalStep;
     originalStep.Init();
 
     originalStep.SetBaseFieldValueInt(STEP_FUNC, 2001);
@@ -86,7 +86,7 @@ void SerializationExample()
     std::cout << "原始数据序列化完成" << std::endl;
 
     // 反序列化到新对象
-    GatePBStep newStep;
+    CachedGatePBStep newStep;
     bool success = newStep.SetPackage(packageData);
 
     if (success)
@@ -113,7 +113,7 @@ void NavigationExample()
 {
     std::cout << "\n=== 记录导航示例 ===" << std::endl;
 
-    GatePBStep step;
+    CachedGatePBStep step;
     step.Init();
 
     // 添加多条记录
@@ -148,7 +148,7 @@ void SpecialCharacterExample()
 {
     std::cout << "\n=== 特殊字符处理示例 ===" << std::endl;
 
-    GatePBStep step;
+    CachedGatePBStep step;
     step.Init();
 
     // 包含特殊字符的字符串
@@ -162,7 +162,7 @@ void SpecialCharacterExample()
     // 序列化和反序列化
     std::string serialized = step.ToString();
 
-    GatePBStep newStep;
+    CachedGatePBStep newStep;
     newStep.SetPackage(serialized);
 
     // 验证特殊字符是否正确处理
@@ -184,7 +184,7 @@ void PerformanceExample()
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    GatePBStep step;
+    CachedGatePBStep step;
     step.Init();
 
     step.SetBaseFieldValueInt(STEP_FUNC, 3001);
@@ -220,7 +220,7 @@ void PerformanceExample()
 
 int main()
 {
-    std::cout << "GatePBStep 使用示例" << std::endl;
+    std::cout << "CachedGatePBStep 使用示例" << std::endl;
     std::cout << "==================" << std::endl;
 
     try

@@ -11,7 +11,7 @@ void TestBasicFunctionality()
 {
     std::cout << "Testing basic functionality..." << std::endl;
     
-    GatePBStep step;
+    CachedGatePBStep step;
     
     // 测试初始化
     step.Init();
@@ -36,7 +36,7 @@ void TestRecordOperations()
 {
     std::cout << "Testing record operations..." << std::endl;
     
-    GatePBStep step;
+    CachedGatePBStep step;
     step.Init();
     
     // 添加第一条记录
@@ -74,7 +74,7 @@ void TestSerialization()
 {
     std::cout << "Testing serialization..." << std::endl;
     
-    GatePBStep step1;
+    CachedGatePBStep step1;
     step1.Init();
     
     // 设置基础记录
@@ -100,7 +100,7 @@ void TestSerialization()
     assert(!serialized.empty());
     
     // 反序列化
-    GatePBStep step2;
+    CachedGatePBStep step2;
     bool result = step2.SetPackage(serialized);
     assert(result);
     
@@ -126,7 +126,7 @@ void TestEscaping()
 {
     std::cout << "Testing character escaping..." << std::endl;
     
-    GatePBStep step;
+    CachedGatePBStep step;
     step.Init();
     
     // 测试包含特殊字符的字符串
@@ -160,7 +160,7 @@ void TestPerformance()
     
     auto start = std::chrono::high_resolution_clock::now();
     
-    GatePBStep step;
+    CachedGatePBStep step;
     step.Init();
     
     // 添加大量记录

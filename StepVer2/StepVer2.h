@@ -17,11 +17,11 @@
 
 namespace stepver2
 {
-    class GatePBStep
+    class CachedGatePBStep
     {
     public:
-        GatePBStep(); // 0表示使用默认值，从最低档开始
-        virtual ~GatePBStep() = default;
+        CachedGatePBStep(); // 0表示使用默认值，从最低档开始
+        virtual ~CachedGatePBStep() = default;
 
         void Init();
 
@@ -97,7 +97,6 @@ namespace stepver2
         std::string GetItem(int stepid);
 
     protected:
-        int blockSize_{0};
         //<id, val>
         std::map<int, std::string> baseRecord_;
 
