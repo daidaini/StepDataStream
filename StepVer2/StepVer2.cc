@@ -169,6 +169,7 @@ namespace stepver2
         }
 
         bodyRecords_.back().data = ptr;
+        ::memcpy(bodyRecords_.back().data, ptr, tmpBuffer_.size());
         bodyRecords_.back().length = tmpBuffer_.size();
 
         tmpBuffer_.clear();

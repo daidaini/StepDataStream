@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 设置编译选项
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O0 -ggdb")
 
 # 包含目录
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -26,6 +26,8 @@ file(GLOB ORIGINAL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/../CachedPBStep.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/../ReuseCacheList.cc"
 )
+
+add_definitions(-DFMT_HEADER_ONLY)
 
 # 创建新实现的库
 add_library(stepver2 STATIC

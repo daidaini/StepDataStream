@@ -6,14 +6,16 @@
 #pragma once
 
 #include "MemoryPool.h"
-#include "StringExtensions.h"
 
 #include <string>
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <type_traits>
 #include <assert.h>
 #include <stdexcept>
+
+#include <fmt/format.h>
 
 namespace stepver2
 {
@@ -44,25 +46,19 @@ namespace stepver2
         // 结束当条记录的添加
         void EndAppendRecord();
 
-        // 添加记录
+        // 添加记录 - 字符串类型特化
         template <class DataType>
         void AddFieldValue(int stepid, DataType &&value, bool isEscape = false)
         {
-            tmpBuffer_.append(std::to_string(stepid));
-            tmpBuffer_.push_back('=');
-
             if (isEscape)
             {
-                tmpBuffer_.append(
-                    EscapeItem(std::to_string(std::forward<DataType>(value))));
+                std::string strValue = fmt::format("{}",value);
+                tmpBuffer_.append(fmt::format("{}={}&", stepid, EscapeItem(strValue)));
             }
             else
             {
-                tmpBuffer_.append(
-                    std::to_string(std::forward<DataType>(value)));
+                tmpBuffer_.append(fmt::format("{}={}&", stepid, value));
             }
-
-            tmpBuffer_.push_back('&');
         }
 
         bool SetFieldValue(int stepid, const char *value) __attribute__((__warn_unused_result__));

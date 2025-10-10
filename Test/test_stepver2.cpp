@@ -130,7 +130,7 @@ void TestEscaping()
     step.Init();
     
     // 测试包含特殊字符的字符串
-    std::string testStr = "Test=Value&Another\nLine";
+    std::string testStr = "Test=Value&Another\"Line";
     step.SetBaseFieldValueString(STEP_MSG, testStr);
     
     // 验证转义和反转义
@@ -139,11 +139,11 @@ void TestEscaping()
     
     // 测试记录中的转义
     step.AppendRecord();
-    step.AddFieldValue(STEP_MSG, testStr, true); // 启用转义
+    step.AddFieldValue(STEP_XXNR, testStr, true); // 启用转义
     step.EndAppendRecord();
     
     step.GotoFirst();
-    std::string recordValue = step.GetStepValueByID(STEP_MSG);
+    std::string recordValue = step.GetStepValueByID(STEP_XXNR);
     std::cout << "TestEscaping = \n" << recordValue << std::endl
               << testStr << std::endl;
     assert(recordValue == testStr);
