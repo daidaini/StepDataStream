@@ -13,13 +13,13 @@ namespace stepver2
         {'\\', '\\'}, {'=', 'a'}, {'&', 'b'}, {'\n', 'n'}};
 
     
-    StepVer2::StepVer2()
+    GatePBStep::GatePBStep()
     {
         tmpBuffer_.reserve(1024);
         bodyRecords_.reserve(128);
     }
 
-    void StepVer2::Init()
+    void GatePBStep::Init()
     {
         baseRecord_.clear();
         bodyRecords_.clear();
@@ -29,7 +29,7 @@ namespace stepver2
         currentRecIndex_ = -1;
     }
 
-    bool StepVer2::SetPackage(const std::string &src)
+    bool GatePBStep::SetPackage(const std::string &src)
     {
         auto records = str::Split(src, '\n');
         if (records.empty())
@@ -62,7 +62,7 @@ namespace stepver2
         return true;
     }
 
-    void StepVer2::ParseBaseRecord(const std::string &baseStr)
+    void GatePBStep::ParseBaseRecord(const std::string &baseStr)
     {
         auto items = str::Split(baseStr, '&');
         for (const auto &item : items)
@@ -85,7 +85,7 @@ namespace stepver2
         }
     }
 
-    std::string StepVer2::ToString()
+    std::string GatePBStep::ToString()
     {
         std::string result;
         if (!bodyRecords_.empty())
@@ -104,7 +104,7 @@ namespace stepver2
         return result;
     }
 
-    std::string StepVer2::BaseRecord() const
+    std::string GatePBStep::BaseRecord() const
     {
         std::string result;
         for (const auto &item : baseRecord_)
@@ -118,7 +118,7 @@ namespace stepver2
         return result;
     }
 
-    std::string StepVer2::FormatedRecords(int start, int end)
+    std::string GatePBStep::FormatedRecords(int start, int end)
     {
         if (start < 0 || end <= start)
         {
@@ -140,7 +140,7 @@ namespace stepver2
         return result;
     }
 
-    void StepVer2::AppendRecord()
+    void GatePBStep::AppendRecord()
     {
         if (!tmpBuffer_.empty())
         {
@@ -154,7 +154,7 @@ namespace stepver2
         GotoNext();
     }
 
-    void StepVer2::EndAppendRecord()
+    void GatePBStep::EndAppendRecord()
     {
         if (tmpBuffer_.empty())
         {
@@ -165,7 +165,7 @@ namespace stepver2
         char *ptr = memoryPool_.Allocate(tmpBuffer_.data(), tmpBuffer_.size());
         if (ptr == nullptr)
         {
-            throw std::runtime_error("[StepVer2]MemoryPool size is not enough to store data..");
+            throw std::runtime_error("[GatePBStep]MemoryPool size is not enough to store data..");
         }
 
         bodyRecords_.back().data = ptr;
@@ -174,17 +174,17 @@ namespace stepver2
         tmpBuffer_.clear();
     }
 
-    void StepVer2::GotoFirst()
+    void GatePBStep::GotoFirst()
     {
         currentRecIndex_ = 0;
     }
 
-    void StepVer2::GotoNext()
+    void GatePBStep::GotoNext()
     {
         ++currentRecIndex_;
     }
 
-    std::pair<const char *, int> StepVer2::FindItem(int stepid)
+    std::pair<const char *, int> GatePBStep::FindItem(int stepid)
     {
         if (currentRecIndex_ < 0 || bodyRecords_.empty())
         { // 无包体记录
@@ -244,7 +244,7 @@ namespace stepver2
         return std::make_pair(valPtr, len);
     }
 
-    std::pair<const char *, int> StepVer2::FindItemByBuffer(int stepid)
+    std::pair<const char *, int> GatePBStep::FindItemByBuffer(int stepid)
     {
         size_t pos = 0;
         std::string key = std::to_string(stepid);
@@ -282,7 +282,7 @@ namespace stepver2
         return std::make_pair(tmpBuffer_.data() + pos, len);
     }
 
-    std::string StepVer2::GetItem(int stepid)
+    std::string GatePBStep::GetItem(int stepid)
     {
         std::pair<const char *, int> result = FindItem(stepid);
         if (result.first != nullptr)
@@ -292,7 +292,7 @@ namespace stepver2
         return "";
     }
 
-    std::string StepVer2::GetStepValueByID(int stepid)
+    std::string GatePBStep::GetStepValueByID(int stepid)
     {
         std::pair<const char *, int> result = FindItem(stepid);
 
@@ -304,7 +304,7 @@ namespace stepver2
         return "";
     }
 
-    std::string StepVer2::GetBaseFieldValue(int stepid)
+    std::string GatePBStep::GetBaseFieldValue(int stepid)
     {
         auto it = baseRecord_.find(stepid);
         if (it != baseRecord_.end())
@@ -313,7 +313,7 @@ namespace stepver2
         return "";
     }
 
-    bool StepVer2::SetFieldValue(int stepid, const char *value)
+    bool GatePBStep::SetFieldValue(int stepid, const char *value)
     {
         if (currentRecIndex_ < 0 || bodyRecords_.empty())
         {
@@ -365,24 +365,24 @@ namespace stepver2
         }
     }
 
-    bool StepVer2::SetFieldValueInt(int stepid, int value)
+    bool GatePBStep::SetFieldValueInt(int stepid, int value)
     {
         char cval[128]{};
         snprintf(cval, sizeof(cval), "%d", value);
         return SetFieldValue(stepid, cval);
     }
 
-    void StepVer2::SetBaseFieldValueInt(int stepid, int value)
+    void GatePBStep::SetBaseFieldValueInt(int stepid, int value)
     {
         baseRecord_[stepid] = std::to_string(value);
     }
 
-    void StepVer2::SetBaseFieldValueString(int stepid, const std::string &value)
+    void GatePBStep::SetBaseFieldValueString(int stepid, const std::string &value)
     {
         baseRecord_[stepid] = value; // 直接存储原始值，与ParseBaseRecord保持一致
     }
 
-    std::string StepVer2::EscapeItem(const std::string &src)
+    std::string GatePBStep::EscapeItem(const std::string &src)
     {
         std::string result;
         result.reserve(src.length() + 8);
@@ -402,7 +402,7 @@ namespace stepver2
         return result;
     }
 
-    std::string StepVer2::EscapeBackItem(const std::string &src)
+    std::string GatePBStep::EscapeBackItem(const std::string &src)
     {
         if (src.empty() || src.size() < 2)
         {

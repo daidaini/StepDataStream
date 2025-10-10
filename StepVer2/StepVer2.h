@@ -17,14 +17,11 @@
 
 namespace stepver2
 {
-    class StepVer2
+    class GatePBStep
     {
     public:
-        // 保持与原类相同的常量定义
-        static constexpr int CacheBlockSize = 16 * 1024; // 每条记录的最大长度, 暂定16k
-
-        StepVer2(); // 0表示使用默认值，从最低档开始
-        virtual ~StepVer2() = default;
+        GatePBStep(); // 0表示使用默认值，从最低档开始
+        virtual ~GatePBStep() = default;
 
         void Init();
 

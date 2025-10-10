@@ -57,7 +57,7 @@ double TestNewImplementation(const std::vector<TestRecord> &data)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
-    StepVer2 step;
+    GatePBStep step;
     step.Init();
     
     // 设置基础记录
@@ -106,7 +106,7 @@ void TestSerializationIntegrity()
     // 创建测试数据
     std::vector<TestRecord> testData = GenerateTestData(100);
     
-    StepVer2 step1;
+    GatePBStep step1;
     step1.Init();
     step1.SetBaseFieldValueInt(STEP_FUNC, 1001);
     step1.SetBaseFieldValueString(STEP_MSG, "Test Message with special chars: =&\n");
@@ -123,7 +123,7 @@ void TestSerializationIntegrity()
     std::string serialized = step1.ToString();
     
     // 反序列化
-    StepVer2 step2;
+    GatePBStep step2;
     bool parseResult = step2.SetPackage(serialized);
     assert(parseResult);
     
@@ -154,7 +154,7 @@ void TestMemoryUsage()
 {
     std::cout << "\nTesting memory usage..." << std::endl;
     
-    StepVer2 step;
+    GatePBStep step;
     step.Init();
     
     const int recordCount = 50000;
@@ -190,7 +190,7 @@ int main()
 {
     try
     {
-        std::cout << "StepVer2 Performance and Functionality Test" << std::endl;
+        std::cout << "GatePBStep Performance and Functionality Test" << std::endl;
         std::cout << "=============================================" << std::endl;
         
         // 测试不同数据量的性能
