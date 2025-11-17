@@ -5,3 +5,9 @@
 test_*
 
 .vscode/
+
+PBStep/Test/
+
+Tool/jsoncpp/
+
+stepdef.h
