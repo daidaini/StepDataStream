@@ -49,12 +49,13 @@ namespace std
 class CachedPBStep
 {
 public:
-    // to do.
-    // 优化存储数据结构，还是优化为动态变更大小
-    static constexpr int CacheBlockSize = 16 * 1024; // 每条记录的最大长度, 暂定16k
+    // 三档内存块大小定义
+    static constexpr int CacheBlockSizeTier1 = 4 * 1024;   // 第一档：4K
+    static constexpr int CacheBlockSizeTier2 = 16 * 1024;  // 第二档：16K
+    static constexpr int CacheBlockSizeTier3 = 64 * 1024;  // 第三档：64K
 
-    explicit CachedPBStep(int blockSize = CacheBlockSize);
-    virtual ~CachedPBStep() = default;
+    explicit CachedPBStep(int blockSize = CacheBlockSizeTier1);
+    virtual ~CachedPBStep();
 
     void Init();
 
@@ -129,6 +130,15 @@ protected:
     // 不带转义
     std::string GetItem(int stepid);
 
+    // 检查并扩容缓存
+    void CheckAndExpandCache(size_t requiredSize);
+
+    // 获取下一档的block size
+    int GetNextTierBlockSize(int currentSize) const;
+
+    // 获取缓存池的辅助函数
+    pobo::ReuseCacheList& getCachePool() { return *cachePoolPtr_; }
+
 protected:
     int blockSize_;
     //<id, val>
@@ -138,7 +148,7 @@ protected:
     // body 存储的内容格式还是 id=value&id=value
     std::vector<std::pair<char *, int>> bodyRecords_;
 
-    pobo::ReuseCacheList cachePool_;
+    pobo::ReuseCacheList* cachePoolPtr_;
 
     // 包体的当前记录索引, 没有记录时必须为-1
     int currentRecIndex_ = -1;

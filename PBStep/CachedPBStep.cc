@@ -12,17 +12,22 @@ static const std::map<char, char> s_EscapeItemMap{
     {'\\', '\\'}, {'=', 'a'}, {'&', 'b'}, {'\n', 'n'}};
 
 CachedPBStep::CachedPBStep(int blockSize)
-    : blockSize_(blockSize), cachePool_(blockSize)
+    : blockSize_(blockSize), cachePoolPtr_(new pobo::ReuseCacheList(blockSize))
 {
     tmpBuffer_.reserve(1024);
     bodyRecords_.reserve(128);
+}
+
+CachedPBStep::~CachedPBStep()
+{
+    delete cachePoolPtr_;
 }
 
 void CachedPBStep::Init()
 {
     baseRecord_.clear();
     bodyRecords_.clear();
-    cachePool_.Reset();
+    cachePoolPtr_->Reset();
     tmpBuffer_.clear();
 
     currentRecIndex_ = -1;
@@ -53,7 +58,7 @@ bool CachedPBStep::SetPackage(const std::string &src)
             currBuf.push_back('&'); // 补位
         }
 
-        char *cachePtr = cachePool_.PushBack(currBuf.data(), currBuf.size());
+        char *cachePtr = cachePoolPtr_->PushBack(currBuf.data(), currBuf.size());
 
         bodyRecords_.emplace_back(std::make_pair(cachePtr, currBuf.size()));
     }
@@ -161,11 +166,20 @@ void CachedPBStep::EndAppendRecord()
         return;
     }
 
-    // 结束添加当条记录时，统一存入到缓存，并清理临时buffer
-    char *ptr = cachePool_.PushBack(tmpBuffer_.data(), tmpBuffer_.size());
+    // 首先尝试将数据存储到当前缓存池
+    char *ptr = cachePoolPtr_->PushBack(tmpBuffer_.data(), tmpBuffer_.size());
     if (ptr == nullptr)
     {
-        throw std::runtime_error("[CachedPBStep]CachePool size is not enough to store data..");
+        // 当前缓存池空间不足，尝试扩容
+        CheckAndExpandCache(tmpBuffer_.size());
+
+        // 扩容后再次尝试存储
+        ptr = cachePoolPtr_->PushBack(tmpBuffer_.data(), tmpBuffer_.size());
+        if (ptr == nullptr)
+        {
+            // 扩容后仍然无法存储，抛出异常
+            throw std::runtime_error("[CachedPBStep]CachePool size is not enough to store data after expansion.");
+        }
     }
 
     bodyRecords_.back().first = ptr;
@@ -426,4 +440,75 @@ std::string CachedPBStep::EscapeBackItem(const std::string &src)
     }
 
     return result;
+}
+
+int CachedPBStep::GetNextTierBlockSize(int currentSize) const
+{
+    if (currentSize <= CacheBlockSizeTier1)
+    {
+        return CacheBlockSizeTier2; // 从第一档扩容到第二档
+    }
+    else if (currentSize <= CacheBlockSizeTier2)
+    {
+        return CacheBlockSizeTier3; // 从第二档扩容到第三档
+    }
+    else
+    {
+        return -1; // 第三档也无法满足，返回-1表示无法扩容
+        
+    }
+}
+
+void CachedPBStep::CheckAndExpandCache(size_t requiredSize)
+{
+    if (requiredSize <= static_cast<size_t>(blockSize_))
+    {
+        return; // 当前block size足够，无需扩容
+    }
+
+    // 尝试扩容到下一档
+    int nextTierSize = GetNextTierBlockSize(blockSize_);
+    if (nextTierSize == -1)
+    {
+        // 已经是第三档或无法扩容，抛出异常
+        throw std::runtime_error("[CachedPBStep]Required size " + std::to_string(requiredSize) +
+                               " exceeds maximum cache block size " + std::to_string(CacheBlockSizeTier3));
+    }
+
+    // 扩容到下一档：保存现有数据，重建缓存池
+    int oldBlockSize = blockSize_;
+
+    // 临时保存所有现有记录的数据
+    std::vector<std::string> savedRecords;
+    for (const auto& record : bodyRecords_)
+    {
+        if (record.first != nullptr && record.second > 0)
+        {
+            savedRecords.emplace_back(std::string(record.first, record.second));
+        }
+    }
+
+    // 更新block size
+    blockSize_ = nextTierSize;
+
+    // 重建缓存池：删除旧的，创建新的
+    delete cachePoolPtr_;
+    cachePoolPtr_ = new pobo::ReuseCacheList(blockSize_);
+
+    // 重新添加所有保存的记录
+    bodyRecords_.clear();
+    for (const auto& recordData : savedRecords)
+    {
+        char* ptr = cachePoolPtr_->PushBack(recordData.data(), recordData.size());
+        if (ptr == nullptr)
+        {
+            // 重建失败，回滚并抛出异常
+            blockSize_ = oldBlockSize;
+            delete cachePoolPtr_;
+            cachePoolPtr_ = new pobo::ReuseCacheList(blockSize_);
+            bodyRecords_.clear();
+            throw std::runtime_error("[CachedPBStep]Failed to rebuild cache pool during expansion");
+        }
+        bodyRecords_.emplace_back(std::make_pair(ptr, recordData.size()));
+    }
 }
